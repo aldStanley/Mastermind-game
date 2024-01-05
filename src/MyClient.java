@@ -6,15 +6,19 @@ import java.util.*;
 public class MyClient {
     public static void main(String[] args) {
 
-        try(Socket s=new Socket("localhost",6666);){
-            String input="";
+        try(Socket socket=new Socket("localhost",6666);){
+            String input="",serverResponse;
             BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
-            DataOutputStream dout = new DataOutputStream(s.getOutputStream());
-            DataInputStream din = new DataInputStream(s.getInputStream());
-            String serverResponse;
+            Message messageToSend = new Message(), messageReceived = new Message();
+
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            out.flush();
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+
 
             while(true){
-                serverResponse = din.readUTF();
+                messageReceived = (Message)in.readObject();
+                serverResponse = messageReceived.getContent();
                 System.out.println("Server: " + serverResponse);
                 if(serverResponse.contains("You win") || serverResponse.contains("You lose, boo-hoo") || serverResponse.contains("Someone already guessed the code")){
                     System.out.print("Client: Exiting...");
@@ -23,14 +27,26 @@ public class MyClient {
 
                 //if server asked to type in your guess
                 input = consoleReader.readLine();
-                if(input.equals("N") || input.contains("n")){
+                System.out.println("You typed: "+input);
+
+                if(serverResponse.contains("(Y/N)")&&!input.equals("Y")){
                     System.out.print("See you next time!\nClient: Exiting...");
                     break;
-                }
-                dout.writeUTF(input);
-                dout.flush();
+                }//Client refused to play
 
+                out.writeObject(messageToSend.updateAndGetMessage(input));
+                out.reset();
+                out.flush();
+                messageReceived = (Message)in.readObject();
+                serverResponse = messageReceived.getContent();
+                System.out.println("Server: " + serverResponse);
             }
-        }catch(Exception e){System.out.println(e);}
+            out.close();
+            in.close();
+        }catch(Exception e){
+            System.out.println(e);
+
+        }
+
     }
 }
