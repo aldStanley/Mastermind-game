@@ -106,12 +106,17 @@ public class Server {
                 ResponseGenerator gameResponse = new ResponseGenerator();
                 while(guessLeft > 0 && !shouldStop){
                     System.out.println("Enter case 1");
-                    sendMessageToClient(out,"Secret code is: "+secretCode+"You have "+ guessLeft +" guesses left.\nWhat is your next guess?\nType in the characters for your guess and press enter.\nEnter guess: ");
+                    sendMessageToClient(out,"You have "+ guessLeft +" guesses left.\nWhat is your next guess?\nType in the characters for your guess and press enter.\nEnter guess: ");
+                    //Uncomment the line to see the secret code
+                    //sendMessageToClient(out,"Secret code is: "+secretCode+"You have "+ guessLeft +" guesses left.\nWhat is your next guess?\nType in the characters for your guess and press enter.\nEnter guess: ");
                     userResponse = parseClientMessage(in);
                     System.out.println("User response is: "+userResponse);
 
                     if(userResponse.equals("HISTORY")){
                         sendMessageToClient(out,gameResponse.getHistory());
+                    }
+                    else if(gameResponse.getHistory().contains(userResponse)){
+                        sendMessageToClient(out, "You have already tried that guess. Try something different!\nType HISTORY to see what you have guessed.\n");
                     }
                     else if(gameResponse.isValidGuess(userResponse)) {//valid guess
                         System.out.println("Is a valid guess");
