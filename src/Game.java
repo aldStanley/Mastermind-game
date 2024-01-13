@@ -28,7 +28,7 @@ public class Game {
                 "Only the first letter of the color is displayed. B for Blue, R for Red, and so forth. When entering guesses you only need to enter the first character of each color as a capital letter.\n\n" +
                 "You have 12 guesses to figure out the secret code or you lose the game. Are you ready to play? (Y/N): ");
         userResponse = scanner.nextLine();
-        if(!userResponse.equals("Y"));/** TO DO: add line**/
+        if(!userResponse.equals("Y"));
         System.out.print("\nGenerating secret code ...");
 
         while(!endTheGame){
@@ -52,8 +52,6 @@ public class Game {
                 else if(computerResponse.isValidGuess(userResponse)) {//valid guess
                     if(guessingTime == 1 && !userResponse.equals(secretCode)){
                         System.out.println("Sorry, you are out of guesses. You lose, boo-hoo.\n");
-                        /**TO DO: add LINE**/
-                        //break;
                     }
                     else if(userResponse.equals(secretCode)){
                         break;
@@ -67,7 +65,6 @@ public class Game {
 
             if(userResponse.equals(secretCode)) {
                 System.out.println(userResponse+" -> Result: 4B_0W - You win !!\n");
-                /**TO DO: add LINE**/
             }
 
 //            System.out.print("Are you ready for another game (Y/N): ");
@@ -76,7 +73,6 @@ public class Game {
 //            guessingTime = GameConfiguration.guessNumber;
         }
 
-        /**TO DO: add LINE**/
 
     }
 }

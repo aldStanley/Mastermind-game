@@ -1,6 +1,9 @@
+import Errors.APIKeyEmptyException;
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
+
 
 public class Server {
     private volatile boolean SomeoneWon = false;
@@ -68,6 +71,20 @@ public class Server {
 
         @Override
         public void run() {
+            String colors="";
+            for(int i=0;i<GameConfiguration.colors.length-1;i++){
+                colors = colors+GameConfiguration.colors[i]+",";
+            }
+            colors += GameConfiguration.colors[GameConfiguration.colors.length-1];
+            String welcomeMessage = "\"Welcome to Mastermind.  Here are the rules.\n\n" +"\n" +
+                    "This is a text version of the classic board game Mastermind.\n\n" +"\n" +
+                    "The computer will think of a secret code. The code consists of 4 colored pegs. The pegs MUST be one of six colors: blue, green, orange, purple, red, or yellow. A color may appear more than once in the code. You try to guess what colored pegs are in the code and what order they are in. After you make a valid guess the result (feedback) will be displayed.\n\n" +"\n" +
+                    "The result consists of a black peg for each peg you have guessed exactly correct (color and position) in your guess. For each peg in the guess that is the correct color, but is out of position, you get a white peg. For each peg, which is fully incorrect, you get no feedback.\n\n" +"\n" +
+                    "Only the first letter of the color is displayed. B for Blue, R for Red, and so forth. When entering guesses you only need to enter the first character of each color as a capital letter.\n\n" +"\n" +
+                    "You have \"+guessLeft +\" guesses to figure out the secret code or you lose the game. "+
+                    "Here are the possible colors: "+colors+"\n\n"+
+                    "Are you ready to play? (Type Y to start, N to leave, T for training mode): \n";
+            boolean trainingMode = false;
             try {
 
                 ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
@@ -76,30 +93,19 @@ public class Server {
 
                 String guess, userResponse;
                 boolean endTheGame = false;
-                Message MessageToClient = new Message(), MessageFromClient= new Message();
-
-                sendMessageToClient(out, "Welcome to Mastermind.  Here are the rules.\n\n" +
-                        "This is a text version of the classic board game Mastermind.\n\n" +
-                        "The computer will think of a secret code. The code consists of 4 colored pegs. The pegs MUST be one of six colors: blue, green, orange, purple, red, or yellow. A color may appear more than once in the code. You try to guess what colored pegs are in the code and what order they are in. After you make a valid guess the result (feedback) will be displayed.\n\n" +
-                        "The result consists of a black peg for each peg you have guessed exactly correct (color and position) in your guess. For each peg in the guess that is the correct color, but is out of position, you get a white peg. For each peg, which is fully incorrect, you get no feedback.\n\n" +
-                        "Only the first letter of the color is displayed. B for Blue, R for Red, and so forth. When entering guesses you only need to enter the first character of each color as a capital letter.\n\n" +
-                        "You have "+guessLeft +" guesses to figure out the secret code or you lose the game. Are you ready to play? (Y/N): \n");
+                Message MessageToClient = new Message();
+                sendMessageToClient(out, welcomeMessage);
 
                 userResponse = parseClientMessage(in);
                 if(userResponse.equals("Y")){
                     sendMessageToClient(out, "Great!  Let's play!\n");
                 }
-                else sendMessageToClient(out,"See you next time!");
+                else if(userResponse.equals("T")){
+                    trainingMode = true;
+                    sendMessageToClient(out, "Great!  Let's play training mode!\n");
 
-//                if(!userResponse.equals("Y")){
-//                    /** TO DO: add line**/
-//                    try {
-//                        clientSocket.close();
-//                        return;
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
+                }
+                else sendMessageToClient(out,"See you next time!");
 
                 System.out.println("\nGame started. Generating secret code ...");
 
@@ -125,8 +131,17 @@ public class Server {
                             break;
                         }
                         else if(userResponse.equals(secretCode)){//game won
-                            sendMessageToClient(out,userResponse+" -> Result: 4B_0W - You win !!");
+                            Message endGameMessage = new Message(userResponse+" -> Result: 4B_0W - You win !!");
+                            if(trainingMode){
+                                ChatGPT gpt = new ChatGPT();
+                                endGameMessage.updateMode(true);
+                                String trainingSummary = welcomeMessage+"The below are my guesses, give me advices on how I can improve my guess.\n"+gameResponse.getHistory();
+                                endGameMessage.updateTraininngFeeback(gpt.getGPTResponse(trainingSummary));
+                            }
+                            out.writeObject(endGameMessage);
+                            out.reset();
                             broadcastToAll(this,"Someone already guessed the code! Game over! The code was: "+secretCode+'\n');
+
                             //disconnectAllClients();
                             break;
                         }else{//Generate response and continue the game
@@ -151,6 +166,8 @@ public class Server {
 
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+            catch(APIKeyEmptyException e){
             }
         }
     }

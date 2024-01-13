@@ -21,6 +21,9 @@ public class MyClient {
                 serverResponse = messageReceived.getContent();
                 System.out.println("Server: " + serverResponse);
                 if(serverResponse.contains("You win") || serverResponse.contains("You lose, boo-hoo") || serverResponse.contains("Someone already guessed the code")){
+                    if(messageReceived.getMode()){
+                        System.out.println("The game has ended, here is your game summary:\n"+messageReceived.getTrainingFeedback());
+                    }
                     System.out.print("Client: Exiting...");
                     break;
                 }
@@ -40,6 +43,7 @@ public class MyClient {
                 messageReceived = (Message)in.readObject();
                 serverResponse = messageReceived.getContent();
                 System.out.println("Server: " + serverResponse);
+
             }
             out.close();
             in.close();
